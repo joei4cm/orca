@@ -5,6 +5,10 @@ import {
   botGroupOwnerMessageBlocks,
   type BotGroupMessage
 } from '../../../src/shared/bots/bot-group'
+import {
+  botGroupTurnRows,
+  botGroupTurnSilent
+} from '../../../src/shared/bots/bot-group-member-turn'
 import { stripSentImagePromptMarkers } from '../../../src/shared/native-chat/transcript/images/native-chat-sent-image-prompt-markers'
 import { MobileNativeChatMessage } from '../session/native-chat/transcript/messages/MobileNativeChatMessage'
 import { MobileNativeChatMessageTime } from '../session/native-chat/transcript/messages/MobileNativeChatMessageTime'
@@ -34,6 +38,12 @@ export function MobileBotGroupPost({
 }) {
   const messageStyles = useThemedStyles(messageStylesSheet)
   const styles = useThemedStyles(stylesSheet)
+  // A member turn that said only the quiet marker told the room nothing: the room keeps no line of it.
+  const quiet =
+    message.turns.length > 0 &&
+    message.turns.every((turn) =>
+      botGroupTurnSilent(turn, botGroupTurnRows(turn, sessions.get(turn.sessionId)?.groupTurnItems))
+    )
   return (
     <View>
       {message.author.kind === 'owner' ? (
@@ -57,7 +67,7 @@ export function MobileBotGroupPost({
             <MobileNativeChatMessageTime timestamp={message.createdAt} fontScale={1} />
           </View>
         </>
-      ) : (
+      ) : quiet ? null : (
         <MobileBotGroupPeerRequestLine message={message} />
       )}
       {message.turns.map((turn) => (
