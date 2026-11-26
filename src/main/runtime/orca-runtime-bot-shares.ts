@@ -4,6 +4,7 @@ import type { BotSharePicksStore } from '../bots/sharing/bot-share-picks-store'
 import type { BotShareDownloadPolicy } from '../bots/sharing/bot-share-receive'
 import type { BotShareService } from '../bots/sharing/bot-share-service'
 import type { readBotShareable } from '../bots/sharing/bot-share-sources'
+import { SharingUnavailableOnHostError } from '../../shared/remote-runtime/host-status/sharing-unavailable-on-host'
 import { getProfileUserDataPath } from '../orca-profiles/profile-storage-paths'
 
 export type BotShareClientSource = BotShareClient | (() => Promise<BotShareClient>)
@@ -52,7 +53,8 @@ export class LazyBotShareServices {
   service(): Promise<BotShareService> {
     const config = this.botShareClient
     if (!config) {
-      return Promise.reject(new Error('Sharing a bot needs the Orca desktop app.'))
+      // A headless host has no cloud client, so it refuses the way it refuses any cloud sharing.
+      return Promise.reject(new SharingUnavailableOnHostError())
     }
     if (!this.botShareService) {
       const loading = Promise.all([
