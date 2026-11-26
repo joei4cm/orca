@@ -796,7 +796,7 @@
         "search": {
           "limit": "Limit",
           "maximum": "Maximum",
-          "pty": "pty",
+          "pty": "PTY",
           "capacity": "Kapazität"
         }
       },
@@ -28073,6 +28073,9 @@
         "expired": "Die Anmeldung ist abgelaufen. Versuche es erneut.",
         "couldNotSignIn": "Anmeldung nicht möglich. Versuche es erneut."
       }
+    },
+    "deepLink": {
+      "missing": "Diese Unterhaltung ist auf diesem Computer nicht geöffnet."
     }
   },
   "plugins": {

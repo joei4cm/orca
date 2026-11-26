@@ -27738,6 +27738,9 @@
         "expired": "登入已逾期。請再試一次。",
         "couldNotSignIn": "無法登入。請再試一次。"
       }
+    },
+    "deepLink": {
+      "missing": "該對話未在此電腦上開啟。"
     }
   },
   "plugins": {
