@@ -15,20 +15,26 @@ function isPolicy(value: string): value is ClaudeAccountSwitchRunningSessions {
 export function RunningSessionSwitchSetting({
   copy,
   value,
-  onChange
+  onChange,
+  description,
+  disabled
 }: {
   copy: AccountSwitchCopy
   /** Absent means 'ask'. */
   value: ClaudeAccountSwitchRunningSessions | undefined
   onChange: (value: ClaudeAccountSwitchRunningSessions) => void
+  /** Replaces the copy's own description, for a host that cannot answer this row yet. */
+  description?: string
+  /** The row is read-only: the host does not answer this setting. */
+  disabled?: boolean
 }): React.JSX.Element {
   const t = useTranslate()
   const title = copy.settingTitle
-  const description = copy.settingDescription
+  const rowDescription = description ?? copy.settingDescription
   return (
     <SearchableSetting
       title={title}
-      description={description}
+      description={rowDescription}
       keywords={[
         ...(copy.agent === 'antigravity' ? ['antigravity', 'agy'] : ['claude']),
         'account',
@@ -41,10 +47,11 @@ export function RunningSessionSwitchSetting({
     >
       <div className="min-w-0 flex-1 space-y-0.5">
         <Label>{title}</Label>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <p className="text-xs text-muted-foreground">{rowDescription}</p>
       </div>
       <Select
         value={value ?? 'ask'}
+        disabled={disabled}
         onValueChange={(next) => {
           if (isPolicy(next)) {
             onChange(next)
