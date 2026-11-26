@@ -378,7 +378,8 @@ const stylesSheet = themedStyleSheet((colors, scheme) => ({
   detailsText: { color: colors.textSecondary, fontSize: typography.metaSize, fontWeight: '600' },
   chevronOpen: { transform: [{ rotate: '180deg' }] },
   openWorker: { color: colors.textPrimary, fontSize: 13, fontWeight: '600' },
-  answersScroll: { flexGrow: 0, flexShrink: 1 },
+  // The request gives way before the answers do: a long plan leaves the buttons their height.
+  answersScroll: { flexGrow: 0, flexShrink: 0 },
   answers: {
     gap: 6,
     paddingTop: spacing.sm,

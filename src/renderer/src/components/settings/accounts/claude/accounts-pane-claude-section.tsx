@@ -14,7 +14,7 @@ import { Label } from '../../../ui/label'
 import { ClaudeIcon } from '../../../status-bar/accounts/provider-icons'
 import { SearchableSetting } from '../../section-layout/SearchableSetting'
 import { ClaudeOAuthUsageSetting } from './claude-oauth-usage-setting'
-import { RunningSessionSwitchSetting } from '../running-session-switch-setting'
+import { ClaudeRunningSessionSwitchSetting } from './claude-running-session-switch-setting'
 import { claudeAccountSwitchCopy } from '@/lib/provider-accounts/account-switch-copy'
 import type { AccountsPaneSectionModel } from '../accounts-pane-types'
 import {
@@ -287,13 +287,13 @@ export function renderClaudeAccountsSection(
             recordFeatureInteraction={recordFeatureInteraction}
           />
         )}
-        {isRemoteAccountScope ? null : (
-          <RunningSessionSwitchSetting
-            copy={claudeAccountSwitchCopy(t)}
-            value={settings.claudeAccountSwitchRunningSessions}
-            onChange={(value) => updateSettings({ claudeAccountSwitchRunningSessions: value })}
-          />
-        )}
+        {/* The switch decides what happens to the host's terminals, so it belongs to the host the pane lists. */}
+        <ClaudeRunningSessionSwitchSetting
+          owner={accountOwner}
+          copy={claudeAccountSwitchCopy(t)}
+          settings={settings}
+          updateSettings={updateSettings}
+        />
       </SettingsGroup>
     </div>
   )
