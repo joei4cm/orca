@@ -3,6 +3,7 @@ import { useAppStore } from '../../../store'
 import { makePaneKey } from '../../../../../shared/workspace-layout/stable-pane-id'
 import { connectPanePty } from '../pty-connection/connect-pane-pty'
 import { releasePaneTransportForRestart } from './pane-restart-transport-handoff'
+import { enterPendingPaneRestart, leavePendingPaneRestart } from './pending-pane-restart'
 import { holdPaneResumeInPlace } from '../session-restore/spawn-deferral/pane-spawn-deferral-registry'
 import { clearPaneTerminalError } from '../errors/terminal-error-accumulation'
 import type { PtyConnectionDeps } from '../pty-connection/pty-connection-deps'
@@ -94,6 +95,9 @@ export function usePaneProcessRestart({
         () => true
       )
       try {
+        // Why: the clears below strip the tab's bindings; without this mark the retention pass can
+        // force-park the pane before the replacement spawn is admitted, and the restart never lands.
+        enterPendingPaneRestart(tabId)
         const transport = paneTransportsRef.current.get(paneId)
         const panePtyBinding = panePtyBindingsRef.current.get(paneId)
         const existingPtyId = transport?.getPtyId()
@@ -116,6 +120,7 @@ export function usePaneProcessRestart({
           cwd,
           startup,
           releaseResumeInPlace,
+          releasePaneRestartFlight: () => leavePendingPaneRestart(tabId),
           ...(replacesPtyId ? { replacesPtyId } : {}),
           mountFollowsTerminalPark: false,
           invalidateRetainedInlineScrollback: (leafId) => {
@@ -157,6 +162,7 @@ export function usePaneProcessRestart({
         }
       } catch (error) {
         releaseResumeInPlace()
+        leavePendingPaneRestart(tabId)
         throw error
       }
     },

@@ -30,7 +30,7 @@ import {
   isAgentTaskCompleteTrackingEnabled
 } from './notifications/agent-task-complete-settings'
 
-import { installRunDeferredConnect } from './run-deferred-connect'
+import { installPaneRestartFlightRelease, installRunDeferredConnect } from './run-deferred-connect'
 
 import { installSleepingRecordAccess } from './startup/sleeping-record-access'
 import { installShellCommandInference } from './agent-identity/shell-command-inference'
@@ -337,5 +337,6 @@ export function connectPanePty(
   installPtyResizeForward(session)
   installPtyResizeGeometry(session)
   installRunDeferredConnect(session)
+  installPaneRestartFlightRelease(session)
   return createPanePtyBinding(session)
 }

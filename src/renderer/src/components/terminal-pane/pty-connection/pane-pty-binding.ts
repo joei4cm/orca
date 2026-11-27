@@ -143,6 +143,8 @@ export function createPanePtyBinding(session: ConnectPanePtySession): PanePtyBin
       session.spawnedFreshPtyId === ptyId && !Number.isFinite(session.lastTerminalInputAt),
     dispose() {
       session.disposed = true
+      // A pane torn down before its replacement spawn was admitted must not keep the tab park-exempt.
+      session.releasePaneRestartFlight()
       session.deps.releaseResumeInPlace?.()
       session.discardAgentPreReadyDraft?.()
       session.cleanupKittyFileReader()

@@ -36,6 +36,8 @@ export type PtyConnectionDeps = {
   replacesPtyId?: string
   /** Ownership acquired before clearing the old binding; released on spawn settlement or disposal. */
   releaseResumeInPlace?: () => void
+  /** Releases the parking exemption the restart's caller entered for this tab, exactly once. */
+  releasePaneRestartFlight?: () => void
   restoredLeafId?: string | null
   restoredPtyIdByLeafId?: Record<string, string>
   /** Render-time park intent survives watcher disposal and is consumed once after layout replay. */

@@ -10,6 +10,7 @@ import {
 } from './terminal-hidden-view-parking'
 import type { TerminalTab } from '../../../../../../shared/workspace-layout/terminal-tab-types'
 import { createWorktreeTabBucketProjection } from '@/lib/workspace/tabs/worktree-tab-bucket-projection'
+import { hasPendingPaneRestart } from '../../process-exit/pending-pane-restart'
 
 // Budget hidden worktrees by count and absolute TTL: measured pane heap grows with scrollback. Last-active exempts only the cap; unrestorable live tabs must remain mounted, and scrollback depth is unbounded, so force-park may free nothing.
 export const TERMINAL_HIDDEN_WORKTREE_RETENTION_LIMIT = 4
@@ -36,6 +37,10 @@ export function hasPendingRetentionSpawnWork(
   pendingStartupByTabId: Readonly<Record<string, unknown>>
 ): boolean {
   if (pendingStartupByTabId[tab.id] !== undefined) {
+    return true
+  }
+  // A restart in flight has cleared its bindings and will admit its replacement spawn shortly.
+  if (hasPendingPaneRestart(tab.id)) {
     return true
   }
   // Paired mirrors never spawn locally; their host PTY proves activation-suppression residue is finished.

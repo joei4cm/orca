@@ -62,6 +62,18 @@ import type { ConnectPanePtySession } from './connect-pane-pty-session'
 
 // Preserve WebGL hook registration before deferred connection setup.
 
+/**
+ * Releases the parking exemption the restart's caller entered for this tab. Why once: connect
+ * admission and disposal both end the flight, and a second release would corrupt the count.
+ */
+export function installPaneRestartFlightRelease(session: ConnectPanePtySession): void {
+  session.releasePaneRestartFlight = (): void => {
+    const release = session.deps.releasePaneRestartFlight
+    session.deps.releasePaneRestartFlight = undefined
+    release?.()
+  }
+}
+
 export function installRunDeferredConnect(session: ConnectPanePtySession): void {
   const cwdPromise = session.deps.cwdPromise
   let cwdPromiseSettled = cwdPromise === undefined
@@ -178,6 +190,8 @@ export function installRunDeferredConnect(session: ConnectPanePtySession): void 
       return
     }
     session.connectStarted = true
+    // The replacement spawn dispatches synchronously from here, so the tab may be parked again.
+    session.releasePaneRestartFlight()
     releaseHideWait?.()
     session.cancelScheduledConnectFrame()
     if (session.connectFallbackTimer !== null) {
