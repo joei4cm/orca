@@ -2,6 +2,7 @@ import type { GlobalSettings } from '../../../../../../shared/settings/global-se
 import type { RuntimeClientTarget } from '../../../../../../shared/remote-runtime/host-catalog/runtime-client-target'
 import { useTranslate } from '@/i18n/use-translate'
 import type { AccountSwitchCopy } from '@/lib/provider-accounts/account-switch-copy'
+import { Button } from '../../../ui/button'
 import {
   getHostSettingUnsupportedNote,
   getHostSettingUpdateFailedMessage,
@@ -36,16 +37,35 @@ export function ClaudeRunningSessionSwitchSetting({
   })
   const ready = policy.setting.state === 'ready'
   return (
-    <RunningSessionSwitchSetting
-      copy={copy}
-      value={policy.setting.state === 'ready' ? policy.setting.value : 'ask'}
-      description={
-        policy.setting.state === 'unsupported'
-          ? getHostSettingUnsupportedNote(hostLabel, t)
-          : undefined
-      }
-      disabled={!ready}
-      onChange={(next) => void policy.update(next)}
-    />
+    <>
+      {policy.setting.state === 'error' && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 py-2 text-xs text-muted-foreground"
+        >
+          <span>
+            {t(
+              'accounts.claude.switchSessions.loadFailed',
+              "Couldn't load the switch setting from {{host}}.",
+              { host: hostLabel }
+            )}
+          </span>
+          <Button type="button" size="sm" variant="outline" onClick={policy.retry}>
+            {t('accounts.claude.switchSessions.retry', 'Try again')}
+          </Button>
+        </div>
+      )}
+      <RunningSessionSwitchSetting
+        copy={copy}
+        value={policy.setting.state === 'ready' ? policy.setting.value : 'ask'}
+        description={
+          policy.setting.state === 'unsupported'
+            ? getHostSettingUnsupportedNote(hostLabel, t)
+            : undefined
+        }
+        disabled={!ready}
+        onChange={(next) => void policy.update(next)}
+      />
+    </>
   )
 }
