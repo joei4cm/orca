@@ -78,14 +78,17 @@ export async function endedTurn(
   }
   const items = journal.items.filter((item) => item.sequence <= cursor.sequence)
   const opener = await readEndedChatTurnOpener(() => chat.journalReads(sessionId), items, turnId)
-  const lastAssistantMessage = latestStructuredAgentSessionAssistantMessage(items)
+  const turn = outboxTurn(items, journal.submissions, opener, turnId)
+  // A message queued after the turn's answer stops the scan below at it; the turn's own words
+  // are still its answer.
+  const lastAssistantMessage = latestStructuredAgentSessionAssistantMessage(items) || turn.turnProse
   const failure = latestStructuredAgentSessionFailure(items, journal.submissions)
   return {
     ...(lastAssistantMessage ? { lastAssistantMessage } : {}),
     ...(failure ? { failure } : {}),
     latestOpener: latestTurnOpener(items),
     ...(opener === undefined ? {} : { opener }),
-    ...outboxTurn(items, journal.submissions, opener, turnId)
+    ...turn
   }
 }
 

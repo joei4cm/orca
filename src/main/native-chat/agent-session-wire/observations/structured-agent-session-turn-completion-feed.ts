@@ -248,9 +248,6 @@ export class StructuredAgentSessionTurnCompletionFeed {
       baseline.held = null
       return null
     }
-    if (state.owesWork) {
-      return null
-    }
     if (
       !request ||
       (baseline.settled?.kind === request.kind && baseline.settled.id === request.id)
@@ -259,19 +256,22 @@ export class StructuredAgentSessionTurnCompletionFeed {
     }
     // Live work defers this end. One running workers hold is news now to those who hear held ends:
     // its words are sent with it. A continuing goal's is not, as its later turns finish the answer.
-    const hold = structuredAgentSessionTurnHold(
-      state,
-      request,
-      () => this.deps.readChildWork(sessionId),
-      () => this.deps.readAsyncQuestionsSkippedThrough?.(sessionId)
-    )
+    // An owed send holds it the same way: the next turn would otherwise announce itself in this
+    // turn's place, and this turn's words would never be sent.
+    const hold =
+      structuredAgentSessionTurnHold(
+        state,
+        request,
+        () => this.deps.readChildWork(sessionId),
+        () => this.deps.readAsyncQuestionsSkippedThrough?.(sessionId)
+      ) ?? (state.owesWork ? 'owed' : null)
     if (hold) {
-      if (hold === 'goal' || sameMark(baseline.held, request)) {
+      if (hold === 'goal' || !request.outcome || sameMark(baseline.held, request)) {
         return null
       }
       baseline.held = { kind: request.kind, id: request.id, heard: new Set() }
       return {
-        completion: this.completionOf(sessionId, session, state, request.id, 'success'),
+        completion: this.completionOf(sessionId, session, state, request.id, request.outcome),
         held: baseline.held.heard
       }
     }

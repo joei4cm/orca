@@ -9,7 +9,8 @@ const location = { kind: 'local' } as const
 function turn(
   id: string,
   running: boolean,
-  goalContinues = false
+  goalContinues = false,
+  owes = false
 ): StructuredAgentSessionStatusState {
   const state = {
     latestRequest: {
@@ -19,7 +20,7 @@ function turn(
       outcome: running ? null : 'success',
       settledAt: running ? undefined : 1
     },
-    owesWork: false,
+    owesWork: owes,
     ...(goalContinues ? { goalContinues } : {}),
     pendingPromptIds: [],
     summary: { status: running ? 'working' : 'idle' }
@@ -92,5 +93,52 @@ it('tells a held answer at its own end, once, to those who hear held ends, befor
     heard: ['late'],
     plain: ['late'],
     late: ['late']
+  })
+})
+
+it('tells a settled end the session still owes a send for to those who hear held ends', () => {
+  const feed = new StructuredAgentSessionTurnCompletionFeed({
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the feed reads only params here.
+    sessions: new Map([['chat', { params: { location } }]]) as never,
+    now: () => 10,
+    readStatusState: async () => null,
+    readChildWork: () => []
+  })
+  const heard: string[] = []
+  feed.subscribe({
+    id: 'held',
+    includePrompts: true,
+    includeHeld: true,
+    emit: (event: AgentSessionTurnCompletionEvent) => {
+      if (event.type === 'completion') {
+        heard.push(event.completion.turnId)
+      }
+    }
+  })
+  const plain: string[] = []
+  feed.subscribe({
+    id: 'plain',
+    includePrompts: true,
+    emit: (event: AgentSessionTurnCompletionEvent) => {
+      if (event.type === 'completion') {
+        plain.push(event.completion.turnId)
+      }
+    }
+  })
+  let sequence = 0
+  const observe = (state: StructuredAgentSessionStatusState) =>
+    feed.observeProjection('chat', { epoch: 'e', sequence: (sequence += 1), state })
+
+  observe(turn('answer', true))
+  // The answer ends while a send the host accepted is still owed to a child.
+  observe(turn('answer', false, false, true))
+  expect({ heard: [...heard], plain: [...plain] }).toEqual({ heard: ['answer'], plain: [] })
+
+  // The owed mail's turn ends in its place; the answer's words are still the news.
+  observe(turn('mail', true))
+  observe(turn('mail', false, false, true))
+  expect({ heard: [...heard], plain: [...plain] }).toEqual({
+    heard: ['answer', 'mail'],
+    plain: []
   })
 })

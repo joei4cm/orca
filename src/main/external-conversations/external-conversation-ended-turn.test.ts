@@ -98,3 +98,36 @@ describe('an ended turn of the owner’s thread', () => {
     expect(ownerThread(indexed).turnFor).toBe('owner')
   })
 })
+
+describe('the words an ended turn ended with', () => {
+  it('are still its own when a message queued after them sits in the same window', async () => {
+    seq = 0
+    const items = [
+      row('u1', message(host)),
+      row('t1', { kind: 'turn', turnId: TURN, state: 'completed', userItemId: 'u1' }),
+      row(
+        'a1',
+        { kind: 'message', role: 'assistant', blocks: [{ type: 'text', text: 'The fix is in.' }] },
+        { turnScope: { kind: 'turn', turnItemId: 't1' } }
+      ),
+      // The mail the host queued while the turn ran, written after the turn's answer.
+      row('u2', message(host))
+    ]
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the readers call only these journal reads.
+    const chat = {
+      journalReads: async () => ({
+        operationWindow: async () => ({ snapshot: { items, submissions: [], cursor: CURSOR } }),
+        canonicalItemIds: async () => [],
+        turnAttribution: async () => ({
+          cursor: CURSOR,
+          turnItemId: 't1',
+          opener: items[0]!,
+          stamps: [],
+          messages: []
+        })
+      })
+    } as unknown as ConversationChat
+    const ended = await endedTurn(chat, 'chat', TURN, CURSOR)
+    expect(ended.lastAssistantMessage).toBe('The fix is in.')
+  })
+})
