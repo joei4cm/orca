@@ -187,6 +187,8 @@ export function useHostSetting<K extends HostOwnedSettingKey>(args: {
 }): {
   setting: HostSetting<HostOwnedSettings[K]>
   update: (value: HostOwnedSettings[K]) => Promise<void>
+  /** Reads the host again after a failed read; a no-op for this app's own settings. */
+  retry: () => void
 } {
   const { owner, settingKey, localSettings, updateLocalSettings, updateFailedMessage } = args
   const environmentId = owner.kind === 'environment' ? owner.environmentId : null
@@ -205,12 +207,14 @@ export function useHostSetting<K extends HostOwnedSettingKey>(args: {
         } catch (error) {
           toast.error(updateFailedMessage, { description: errorMessage(error) })
         }
-      }
+      },
+      retry: () => undefined
     }
   }
   return {
     setting: remote.setting,
-    update: (value) => remote.update({ [settingKey]: value }, value)
+    update: (value) => remote.update({ [settingKey]: value }, value),
+    retry: remote.retry
   }
 }
 
